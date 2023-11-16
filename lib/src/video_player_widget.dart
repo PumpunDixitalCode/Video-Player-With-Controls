@@ -54,16 +54,20 @@ class _VideoPlayerWithControlsState extends State<VideoPlayerWithControls> {
   }
 
   void resetTimer() {
-    setState(() {
-      showControls = true;
-    });
+    if (mounted) {
+      setState(() {
+        showControls = true;
+      });
+    }
 
     // Hide the text after 3 seconds of inactivity
     if (_controller.value.isPlaying) {
       Future.delayed(const Duration(seconds: 3), () {
-        setState(() {
-          showControls = false;
-        });
+        if (mounted) {
+          setState(() {
+            showControls = false;
+          });
+        }
       });
     }
   }
