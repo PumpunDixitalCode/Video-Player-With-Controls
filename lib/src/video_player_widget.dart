@@ -1,26 +1,35 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_player_with_controls/src/helper/format_duration.dart';
 
 class VideoPlayerWithControls extends StatefulWidget {
+  final double? videoHeight;
+  final double? iconSize;
+  final Color? videoProgressPlayedColor;
+  final String videoUrl;
+  final Color? iconColor;
+  final Color? loadingColor;
+  final int? skipVideoUptoSec;
+  final Color? videoProgressBgColor;
+  final Color? videoProgressBufferColor;
+  final Color? borderColor;
+
   const VideoPlayerWithControls(
-      {super.key,
+      {Key? key,
+      this.videoProgressPlayedColor = Colors.red,
       required this.videoUrl,
       this.iconColor = Colors.white,
       this.loadingColor = Colors.red,
       this.skipVideoUptoSec = 5,
       this.videoProgressBgColor = Colors.grey,
       this.videoProgressBufferColor = Colors.white24,
-      this.videoProgressPlayedColor = Colors.red});
-  final String videoUrl;
-  final Color iconColor;
-  final Color loadingColor;
-  final int skipVideoUptoSec;
-  final Color videoProgressBgColor;
-  final Color videoProgressBufferColor;
-  final Color videoProgressPlayedColor;
+      this.iconSize = 100,
+      this.borderColor = Colors.grey,
+      this.videoHeight = 200})
+      : super(key: key);
 
   @override
   State<VideoPlayerWithControls> createState() =>
@@ -67,55 +76,56 @@ class _VideoPlayerWithControlsState extends State<VideoPlayerWithControls> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: SizedBox(
-      width: 750,
-      height: 250,
-      child: isVideoLoading == true
-          ? Center(child: CircularProgressIndicator(color: widget.loadingColor))
-          : !_controller.value.isInitialized
-              ? const SizedBox()
-              : GestureDetector(
-                  onTap: resetTimer,
-                  onLongPress: resetTimer,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        decoration: const BoxDecoration(
-                          color: Colors.black,
-                        ),
-                      ),
-                      AspectRatio(
-                          aspectRatio: _controller.value.aspectRatio,
-                          child: VideoPlayer(_controller)),
-                      skipSeconds(context),
-                      showInitialPauseButton(),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
+    return isVideoLoading == true
+        ? Container(
+            height: widget.videoHeight!,
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: widget.borderColor!)),
+            child: Center(
+              child: CircularProgressIndicator(color: widget.loadingColor),
+            ))
+        : !_controller.value.isInitialized
+            ? SizedBox()
+            : GestureDetector(
+                onTap: resetTimer,
+                onLongPress: resetTimer,
+                child: Container(
+                    height: widget.videoHeight!,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Stack(
                         children: [
-                          videoProgressIndicator(),
-                          otherControls(false)
+                          Center(
+                            child: VideoPlayer(_controller),
+                          ),
+                          skipSeconds(context),
+                          showInitialPauseButton(iconSize: widget.iconSize!),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              videoProgressIndicator(),
+                              otherControls(false)
+                            ],
+                          )
                         ],
-                      )
-                    ],
-                  ),
-                ),
-    ));
+                      ),
+                    )),
+              );
   }
 
   skipSeconds(context) {
-    return SizedBox(
+    return Container(
       child: Row(
         children: [
           InkWell(
             onTap: resetTimer,
             onDoubleTap: () => setState(() {
-              skipExactly(-widget.skipVideoUptoSec);
+              skipExactly(widget.skipVideoUptoSec!);
             }),
             child: SizedBox(
               height: MediaQuery.of(context).size.height,
-              width: MediaQuery.of(context).size.width * 0.35,
+              width: MediaQuery.of(context).size.width * 0.1,
             ),
           ),
           InkWell(
@@ -123,17 +133,17 @@ class _VideoPlayerWithControlsState extends State<VideoPlayerWithControls> {
             onDoubleTap: resetTimer,
             child: SizedBox(
               height: MediaQuery.of(context).size.height,
-              width: MediaQuery.of(context).size.width * 0.30,
+              width: MediaQuery.of(context).size.width * 0.1,
             ),
           ),
           InkWell(
             onTap: resetTimer,
             onDoubleTap: () => setState(() {
-              skipExactly(widget.skipVideoUptoSec);
+              skipExactly(widget.skipVideoUptoSec!);
             }),
             child: SizedBox(
               height: MediaQuery.of(context).size.height,
-              width: MediaQuery.of(context).size.width * 0.35,
+              width: MediaQuery.of(context).size.width * 0.1,
             ),
           )
         ],
@@ -149,7 +159,7 @@ class _VideoPlayerWithControlsState extends State<VideoPlayerWithControls> {
     }
   }
 
-  showInitialPauseButton() {
+  showInitialPauseButton({required double iconSize}) {
     return Visibility(
       visible: showPlayButton,
       child: Stack(
@@ -169,9 +179,9 @@ class _VideoPlayerWithControlsState extends State<VideoPlayerWithControls> {
                 });
                 resetTimer();
               },
-              icon: const Icon(
-                Icons.play_arrow,
-                size: 150.0,
+              icon: Icon(
+                Icons.play_circle_outline_outlined,
+                size: iconSize,
                 color: Colors.grey,
               ),
             ),
@@ -185,9 +195,8 @@ class _VideoPlayerWithControlsState extends State<VideoPlayerWithControls> {
     return VideoProgressIndicator(_controller,
         allowScrubbing: true,
         colors: VideoProgressColors(
-            backgroundColor: widget.videoProgressBgColor,
-            bufferedColor: widget.videoProgressBufferColor,
-            playedColor: widget.videoProgressPlayedColor));
+            bufferedColor: widget.videoProgressBufferColor!,
+            playedColor: widget.videoProgressPlayedColor!));
   }
 
   otherControls(isFullScreen) {
@@ -219,7 +228,7 @@ class _VideoPlayerWithControlsState extends State<VideoPlayerWithControls> {
             },
             icon: Icon(
               _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-              color: widget.iconColor,
+              color: widget.iconColor!,
             ),
           );
         });
@@ -231,7 +240,7 @@ class _VideoPlayerWithControlsState extends State<VideoPlayerWithControls> {
         builder: (context, value, child) {
           return Text(
             '${formatDuration(_controller.value.position)} / ${formatDuration(_controller.value.duration)}',
-            style: TextStyle(color: widget.iconColor),
+            style: TextStyle(color: widget.iconColor!),
           );
         });
   }
